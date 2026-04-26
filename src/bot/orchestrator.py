@@ -9,6 +9,7 @@ import asyncio
 import re
 import time
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -377,6 +378,12 @@ class MessageOrchestrator:
         # Voice messages -> transcribe -> Claude
         app.add_handler(
             MessageHandler(filters.VOICE, self._inject_deps(self.agentic_voice)),
+            group=10,
+        )
+
+        # Location messages -> store GPS + inject into future prompts
+        app.add_handler(
+            MessageHandler(filters.LOCATION, self._inject_deps(self.agentic_location)),
             group=10,
         )
 
@@ -1004,10 +1011,13 @@ class MessageOrchestrator:
         # Independent typing heartbeat — stays alive even with no stream events
         heartbeat = self._start_typing_heartbeat(chat)
 
+        location_prefix = await self._get_location_context(user_id, context)
+        prompt = location_prefix + message_text
+
         success = True
         try:
             claude_response = await claude_integration.run_command(
-                prompt=message_text,
+                prompt=prompt,
                 working_directory=current_dir,
                 user_id=user_id,
                 session_id=session_id,
@@ -1426,6 +1436,71 @@ class MessageOrchestrator:
             logger.error(
                 "Claude voice processing failed", error=str(e), user_id=user_id
             )
+
+    async def agentic_location(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        """Handle GPS location share — store and confirm to user."""
+        user_id = update.effective_user.id
+        loc = update.message.location
+
+        context.user_data["last_location"] = {
+            "latitude": loc.latitude,
+            "longitude": loc.longitude,
+            "updated_at": datetime.now(UTC).isoformat(),
+            "is_live": loc.live_period is not None,
+        }
+
+        storage = context.bot_data.get("storage")
+        if storage:
+            try:
+                await storage.save_user_location(
+                    user_id=user_id,
+                    latitude=loc.latitude,
+                    longitude=loc.longitude,
+                    accuracy=loc.horizontal_accuracy,
+                    is_live=loc.live_period is not None,
+                )
+            except Exception as e:
+                logger.warning("Failed to persist user location", error=str(e))
+
+        live_note = " (live — updates automatically)" if loc.live_period else ""
+        await update.message.reply_text(
+            f"📍 Location saved{live_note}: {loc.latitude:.4f}°N, {loc.longitude:.4f}°E\n"
+            "I'll use this for all subsequent queries."
+        )
+
+    async def _get_location_context(
+        self, user_id: int, context: ContextTypes.DEFAULT_TYPE
+    ) -> str:
+        """Return a location prefix for Claude prompts, or empty string if unknown."""
+        loc = context.user_data.get("last_location")
+        if not loc:
+            storage = context.bot_data.get("storage")
+            if storage:
+                try:
+                    model = await storage.location.get_latest(user_id)
+                    if model:
+                        context.user_data["last_location"] = {
+                            "latitude": model.latitude,
+                            "longitude": model.longitude,
+                            "updated_at": model.updated_at.isoformat(),
+                            "is_live": model.is_live,
+                        }
+                        loc = context.user_data["last_location"]
+                except Exception as e:
+                    logger.warning("Failed to load user location", error=str(e))
+        if not loc:
+            return ""
+        age = datetime.now(UTC) - datetime.fromisoformat(loc["updated_at"])
+        hours_ago = int(age.total_seconds() // 3600)
+        age_str = f"{hours_ago}h ago" if hours_ago > 0 else "just now"
+        live_tag = " (live)" if loc.get("is_live") else ""
+        return (
+            f"[User GPS location{live_tag}: {loc['latitude']:.5f}°N, "
+            f"{loc['longitude']:.5f}°E — shared {age_str}. "
+            f"Use this for any 'near me' or location-relevant queries.]\n\n"
+        )
 
     async def _handle_agentic_media_message(
         self,

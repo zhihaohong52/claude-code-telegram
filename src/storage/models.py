@@ -311,3 +311,23 @@ class UserTokenModel:
         if not self.expires_at:
             return False
         return datetime.now(UTC) > self.expires_at
+
+
+@dataclass
+class LocationModel:
+    """User GPS location model."""
+
+    user_id: int
+    latitude: float
+    longitude: float
+    accuracy: Optional[float]
+    is_live: bool
+    updated_at: datetime
+
+    @classmethod
+    def from_row(cls, row: aiosqlite.Row) -> "LocationModel":
+        """Create from database row."""
+        data = dict(row)
+        data["updated_at"] = _parse_datetime(data.get("updated_at"))
+        data["is_live"] = bool(data.get("is_live", False))
+        return cls(**data)

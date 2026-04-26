@@ -310,6 +310,21 @@ class DatabaseManager:
                     ON project_threads(project_slug);
                 """,
             ),
+            (
+                5,
+                """
+                -- User GPS location (one row per user, upserted on each share)
+                CREATE TABLE IF NOT EXISTS user_location (
+                    user_id INTEGER PRIMARY KEY,
+                    latitude REAL NOT NULL,
+                    longitude REAL NOT NULL,
+                    accuracy REAL,
+                    is_live BOOLEAN DEFAULT FALSE,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(user_id)
+                );
+                """,
+            ),
         ]
 
     async def _init_pool(self):

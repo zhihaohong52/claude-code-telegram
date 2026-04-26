@@ -21,6 +21,7 @@ from .repositories import (
     AnalyticsRepository,
     AuditLogRepository,
     CostTrackingRepository,
+    LocationRepository,
     MessageRepository,
     ProjectThreadRepository,
     SessionRepository,
@@ -45,6 +46,7 @@ class Storage:
         self.audit = AuditLogRepository(self.db_manager)
         self.costs = CostTrackingRepository(self.db_manager)
         self.analytics = AnalyticsRepository(self.db_manager)
+        self.location = LocationRepository(self.db_manager)
 
     async def initialize(self):
         """Initialize storage system."""
@@ -330,3 +332,14 @@ class Storage:
             "total_costs": total_costs,
             "tool_stats": tool_stats,
         }
+
+    async def save_user_location(
+        self,
+        user_id: int,
+        latitude: float,
+        longitude: float,
+        accuracy: Optional[float] = None,
+        is_live: bool = False,
+    ) -> None:
+        """Save or update user GPS location."""
+        await self.location.upsert(user_id, latitude, longitude, accuracy, is_live)

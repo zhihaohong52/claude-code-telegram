@@ -16,6 +16,7 @@ from .database import DatabaseManager
 from .models import (
     AuditLogModel,
     CostTrackingModel,
+    LocationModel,
     MessageModel,
     ProjectThreadModel,
     SessionModel,
@@ -829,3 +830,45 @@ class AnalyticsRepository:
                 "tool_stats": tool_stats,
                 "daily_activity": daily_activity,
             }
+
+
+class LocationRepository:
+    """Repository for user GPS location storage."""
+
+    def __init__(self, db_manager: DatabaseManager):
+        self.db = db_manager
+
+    async def upsert(
+        self,
+        user_id: int,
+        latitude: float,
+        longitude: float,
+        accuracy: Optional[float] = None,
+        is_live: bool = False,
+    ) -> None:
+        """Insert or replace user location."""
+        async with self.db.get_connection() as conn:
+            await conn.execute(
+                """
+                INSERT INTO user_location (user_id, latitude, longitude, accuracy, is_live, updated_at)
+                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(user_id) DO UPDATE SET
+                    latitude=excluded.latitude,
+                    longitude=excluded.longitude,
+                    accuracy=excluded.accuracy,
+                    is_live=excluded.is_live,
+                    updated_at=CURRENT_TIMESTAMP
+                """,
+                (user_id, latitude, longitude, accuracy, is_live),
+            )
+            await conn.commit()
+
+    async def get_latest(self, user_id: int) -> Optional[LocationModel]:
+        """Get the stored location for a user, or None if never shared."""
+        async with self.db.get_connection() as conn:
+            cursor = await conn.execute(
+                "SELECT * FROM user_location WHERE user_id = ?",
+                (user_id,),
+            )
+            row = await cursor.fetchone()
+            return LocationModel.from_row(row) if row else None

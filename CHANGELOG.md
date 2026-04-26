@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **GPS location awareness**: Share your location via Telegram's attachment menu (📎 → Location). Coordinates are stored persistently in SQLite and automatically prepended to every Claude prompt, enabling accurate "near me" queries without repeating your location each session. Supports both one-time and live location shares.
+
 ## [1.6.0] - 2026-03-30
 
 ### Added

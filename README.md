@@ -12,6 +12,7 @@ This bot connects Telegram to Claude Code, providing a conversational AI interfa
 - **Chat naturally** -- ask Claude to analyze, edit, or explain your code in plain language
 - **Maintain context** across conversations with automatic session persistence per project
 - **Code on the go** from any device with Telegram
+- **Share your location** -- send GPS coordinates once and Claude uses them automatically for "near me" queries
 - **Receive proactive notifications** from webhooks, scheduled jobs, and CI/CD events
 - **Stay secure** with built-in authentication, directory sandboxing, and audit logging
 
@@ -195,6 +196,7 @@ Enable with `ENABLE_API_SERVER=true` and `ENABLE_SCHEDULER=true`. See [docs/setu
 - File upload handling with archive extraction
 - Image/screenshot upload with analysis
 - Voice message transcription (Mistral Voxtral / OpenAI Whisper / [local whisper.cpp](docs/local-whisper-cpp.md))
+- GPS location awareness -- share your location once via Telegram's attachment menu; coordinates are stored persistently and auto-injected into every Claude prompt for accurate "near me" queries
 - Git integration with safe repository operations
 - Quick actions system with context-aware buttons
 - Session export in Markdown, HTML, and JSON formats

@@ -99,8 +99,16 @@ The bot supports two interaction modes:
 
 The default conversational mode. Just talk to Claude naturally -- no special commands required.
 
-**Commands:** `/start`, `/new`, `/status`, `/verbose`, `/repo`
+**Commands:** `/start`, `/new`, `/compact`, `/status`, `/verbose`, `/repo`
 If `ENABLE_PROJECT_THREADS=true`: `/sync_threads`
+
+| Command | Description |
+|---------|-------------|
+| `/new` | Start a fresh session (clears context) |
+| `/compact` | Summarise the current session and continue with a smaller context |
+| `/status` | Show current session and cost info |
+| `/verbose 0\|1\|2` | Control how much background activity is shown |
+| `/repo [name]` | List workspace repos or switch to one |
 
 ```
 You: What files are in this project?
@@ -189,7 +197,8 @@ Enable with `ENABLE_API_SERVER=true` and `ENABLE_SCHEDULER=true`. See [docs/setu
 - Conversational agentic mode (default) with natural language interaction
 - Classic terminal-like mode with 13 commands and inline keyboards
 - Full Claude Code integration with SDK (primary) and CLI (fallback)
-- Automatic session persistence per user/project directory
+- Automatic session persistence per user/project directory with follow-up question support
+- `/compact` command — summarises the active session and continues with a fresh context window, preserving conversational thread
 - Multi-layer authentication (whitelist + optional token-based)
 - Rate limiting with token bucket algorithm
 - Directory sandboxing with path traversal prevention

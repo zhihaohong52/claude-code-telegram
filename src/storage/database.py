@@ -10,7 +10,7 @@ Features:
 import asyncio
 import sqlite3
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import AsyncIterator, List, Tuple
 
@@ -23,9 +23,14 @@ logger = structlog.get_logger()
 # Python 3.12+: sqlite3's default datetime adapter is deprecated.
 # Register explicit adapters/converters once at import time to avoid warnings
 # and keep consistent ISO-8601 persistence for datetime values.
+def _parse_dt(b: bytes) -> datetime:
+    dt = datetime.fromisoformat(b.decode())
+    return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
+
+
 sqlite3.register_adapter(datetime, lambda value: value.isoformat())
-sqlite3.register_converter("TIMESTAMP", lambda b: datetime.fromisoformat(b.decode()))
-sqlite3.register_converter("DATETIME", lambda b: datetime.fromisoformat(b.decode()))
+sqlite3.register_converter("TIMESTAMP", _parse_dt)
+sqlite3.register_converter("DATETIME", _parse_dt)
 # Keep DATE columns as raw ISO strings (matches existing model expectations).
 sqlite3.register_converter("DATE", lambda b: b.decode())
 

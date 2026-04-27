@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-04-26
+
 ### Added
 - **GPS location awareness**: Share your location via Telegram's attachment menu (📎 → Location). Coordinates are stored persistently in SQLite and automatically prepended to every Claude prompt, enabling accurate "near me" queries without repeating your location each session. Supports both one-time and live location shares.
+- **`/compact` command**: Summarises the active session into a concise context and starts a fresh Claude session with that summary prepended, reducing context window usage while preserving conversational continuity.
 
 ### Changed
 - **Location is now optional**: Messages work without a stored location. Claude asks for your Telegram location only when the query is location-specific (e.g. "near me", "nearby"). All other queries proceed normally.

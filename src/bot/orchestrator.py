@@ -325,6 +325,7 @@ class MessageOrchestrator:
         handlers = [
             ("start", self.agentic_start),
             ("new", self.agentic_new),
+            ("compact", self.agentic_compact),
             ("status", self.agentic_status),
             ("verbose", self.agentic_verbose),
             ("repo", self.agentic_repo),
@@ -464,6 +465,7 @@ class MessageOrchestrator:
             commands = [
                 BotCommand("start", "Start the bot"),
                 BotCommand("new", "Start a fresh session"),
+                BotCommand("compact", "Compact current session to save context"),
                 BotCommand("status", "Show session status"),
                 BotCommand("verbose", "Set output verbosity (0/1/2)"),
                 BotCommand("repo", "List repos / switch workspace"),
@@ -558,6 +560,55 @@ class MessageOrchestrator:
         context.user_data["force_new_session"] = True
 
         await update.message.reply_text("Session reset. What's next?")
+
+    async def agentic_compact(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        """Summarise session, store summary, reset session ready for continuation."""
+        session_id = context.user_data.get("claude_session_id")
+        if not session_id:
+            await update.message.reply_text("No active session to compact.")
+            return
+
+        progress_msg = await update.message.reply_text("Compacting session...")
+
+        claude_integration = context.bot_data.get("claude_integration")
+        if not claude_integration:
+            await progress_msg.edit_text("Claude integration not available.")
+            return
+
+        current_dir = context.user_data.get(
+            "current_directory", self.settings.approved_directory
+        )
+        user_id = update.effective_user.id
+
+        logger.info("Compacting session", user_id=user_id, session_id=session_id)
+
+        try:
+            claude_response = await claude_integration.run_command(
+                prompt=(
+                    "Summarise our entire conversation so far. Include: all decisions"
+                    " made, key facts, work completed, and what we were working towards."
+                    " Be concise but complete enough to continue effectively."
+                ),
+                working_directory=current_dir,
+                user_id=user_id,
+                session_id=session_id,
+                force_new=False,
+            )
+
+            if claude_response.is_error:
+                raise RuntimeError(claude_response.result)
+
+            context.user_data["compact_summary"] = claude_response.result
+            context.user_data["claude_session_id"] = None
+            context.user_data["force_new_session"] = True
+            await progress_msg.edit_text("Session compacted ✓")
+            logger.info("Session compacted", user_id=user_id)
+
+        except Exception as e:
+            logger.warning("Compact failed", user_id=user_id, error=str(e))
+            await progress_msg.edit_text("Compact failed — session unchanged.")
 
     async def agentic_status(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -1014,6 +1065,10 @@ class MessageOrchestrator:
         location_prefix = await self._get_location_context(user_id, context)
         prompt = location_prefix + message_text
 
+        compact_summary = context.user_data.get("compact_summary")
+        if compact_summary and context.user_data.get("force_new_session"):
+            prompt = f"[Previous session summary: {compact_summary}]\n\n{prompt}"
+
         success = True
         try:
             claude_response = await claude_integration.run_command(
@@ -1029,6 +1084,7 @@ class MessageOrchestrator:
             # New session created successfully — clear the one-shot flag
             if force_new:
                 context.user_data["force_new_session"] = False
+                context.user_data.pop("compact_summary", None)
 
             context.user_data["claude_session_id"] = claude_response.session_id
 

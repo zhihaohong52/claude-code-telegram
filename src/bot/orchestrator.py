@@ -1491,7 +1491,12 @@ class MessageOrchestrator:
                 except Exception as e:
                     logger.warning("Failed to load user location", error=str(e))
         if not loc:
-            return ""
+            return (
+                "[No user location stored. If this query is location-specific "
+                "(e.g. 'near me', 'nearby', 'in my area'), reply asking the user "
+                "to share their location via Telegram's location attachment. "
+                "For all other queries, proceed normally.]\n\n"
+            )
         age = datetime.now(UTC) - datetime.fromisoformat(loc["updated_at"])
         hours_ago = int(age.total_seconds() // 3600)
         age_str = f"{hours_ago}h ago" if hours_ago > 0 else "just now"

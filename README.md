@@ -12,7 +12,7 @@ This bot connects Telegram to Claude Code, providing a conversational AI interfa
 - **Chat naturally** -- ask Claude to analyze, edit, or explain your code in plain language
 - **Maintain context** across conversations with automatic session persistence per project
 - **Code on the go** from any device with Telegram
-- **Share your location** -- send GPS coordinates once and Claude uses them automatically for "near me" queries
+- **Share your location** -- optionally send GPS coordinates; Claude asks for location only when your query needs it
 - **Receive proactive notifications** from webhooks, scheduled jobs, and CI/CD events
 - **Stay secure** with built-in authentication, directory sandboxing, and audit logging
 
@@ -46,24 +46,24 @@ Choose your preferred method:
 
 ```bash
 # Using uv (recommended — installs in an isolated environment)
-uv tool install git+https://github.com/RichardAtCT/claude-code-telegram@v1.3.0
+uv tool install git+https://github.com/zhihaohong52/claude-code-telegram@v1.3.0
 
 # Or using pip
-pip install git+https://github.com/RichardAtCT/claude-code-telegram@v1.3.0
+pip install git+https://github.com/zhihaohong52/claude-code-telegram@v1.3.0
 
 # Track the latest stable release
-pip install git+https://github.com/RichardAtCT/claude-code-telegram@latest
+pip install git+https://github.com/zhihaohong52/claude-code-telegram@latest
 ```
 
 #### Option B: From source (for development)
 
 ```bash
-git clone https://github.com/RichardAtCT/claude-code-telegram.git
+git clone https://github.com/zhihaohong52/claude-code-telegram.git
 cd claude-code-telegram
 make dev  # requires Poetry
 ```
 
-> **Note:** Always install from a tagged release (not `main`) for stability. See [Releases](https://github.com/RichardAtCT/claude-code-telegram/releases) for available versions.
+> **Note:** Always install from a tagged release (not `main`) for stability. See [Releases](https://github.com/zhihaohong52/claude-code-telegram/releases) for available versions.
 
 ### 3. Configure
 
@@ -196,7 +196,7 @@ Enable with `ENABLE_API_SERVER=true` and `ENABLE_SCHEDULER=true`. See [docs/setu
 - File upload handling with archive extraction
 - Image/screenshot upload with analysis
 - Voice message transcription (Mistral Voxtral / OpenAI Whisper / [local whisper.cpp](docs/local-whisper-cpp.md))
-- GPS location awareness -- share your location once via Telegram's attachment menu; coordinates are stored persistently and auto-injected into every Claude prompt for accurate "near me" queries
+- GPS location awareness -- share your location via Telegram's attachment menu; coordinates are stored persistently and injected into prompts when needed. Location is optional: non-location queries work without it, and Claude will ask for your location only when the query requires it
 - Git integration with safe repository operations
 - Quick actions system with context-aware buttons
 - Session export in Markdown, HTML, and JSON formats
@@ -369,7 +369,7 @@ MIT License -- see [LICENSE](LICENSE).
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=RichardAtCT/claude-code-telegram&type=Date)](https://star-history.com/#RichardAtCT/claude-code-telegram&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=zhihaohong52/claude-code-telegram&type=Date)](https://star-history.com/#zhihaohong52/claude-code-telegram&Date)
 
 ## Acknowledgments
 

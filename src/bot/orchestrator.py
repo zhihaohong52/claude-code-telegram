@@ -558,6 +558,7 @@ class MessageOrchestrator:
         context.user_data["claude_session_id"] = None
         context.user_data["session_started"] = True
         context.user_data["force_new_session"] = True
+        context.user_data.pop("compact_summary", None)
 
         await update.message.reply_text("Session reset. What's next?")
 
@@ -598,9 +599,9 @@ class MessageOrchestrator:
             )
 
             if claude_response.is_error:
-                raise RuntimeError(claude_response.result)
+                raise RuntimeError(claude_response.content)
 
-            context.user_data["compact_summary"] = claude_response.result
+            context.user_data["compact_summary"] = claude_response.content
             context.user_data["claude_session_id"] = None
             context.user_data["force_new_session"] = True
             await progress_msg.edit_text("Session compacted ✓")

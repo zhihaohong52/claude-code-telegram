@@ -20,6 +20,10 @@
         "ONEMAP_EMAIL": "your_onemap_email@example.com",
         "ONEMAP_PASSWORD": "your_onemap_password_here"
       }
+    },
+    "mrt-exits": {
+      "command": "poetry",
+      "args": ["run", "python", "src/mcp/mrt_exits_server.py"]
     }
   }
 }

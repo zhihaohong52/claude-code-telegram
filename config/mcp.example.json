@@ -3,6 +3,14 @@
     "telegram": {
       "command": "python",
       "args": ["src/mcp/telegram_server.py"]
+    },
+    "google-maps": {
+      "command": "bunx",
+      "args": ["-y", "@cablate/mcp-google-map", "--stdio"],
+      "env": {
+        "GOOGLE_MAPS_API_KEY": "your_google_maps_api_key_here",
+        "GOOGLE_MAPS_ENABLED_TOOLS": "maps_geocode,maps_reverse_geocode,maps_directions,maps_distance_matrix,maps_search_places,maps_search_nearby,maps_place_details,maps_static_map"
+      }
     }
   }
 }

@@ -9,6 +9,7 @@ Tools:
 
 from __future__ import annotations
 
+import functools
 import json
 import math
 import re
@@ -61,7 +62,9 @@ def _load_features() -> list[dict[str, Any]]:
     return out
 
 
-_FEATURES = _load_features()
+@functools.lru_cache(maxsize=1)
+def _get_features() -> list[dict[str, Any]]:
+    return _load_features()
 
 
 def _haversine_meters(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -75,7 +78,7 @@ def _haversine_meters(lat1: float, lon1: float, lat2: float, lon2: float) -> flo
 @mcp.tool()
 async def list_stations() -> list[str]:
     """Return all unique MRT/LRT station names in Singapore."""
-    return sorted({f["station"] for f in _FEATURES if f["station"]})
+    return sorted({f["station"] for f in _get_features() if f["station"]})
 
 
 @mcp.tool()
@@ -88,7 +91,7 @@ async def station_exits(station_name: str) -> list[dict[str, Any]]:
     target = _normalize_station(station_name)
     return [
         {"exit_code": f["exit_code"], "lat": f["lat"], "lon": f["lon"]}
-        for f in _FEATURES
+        for f in _get_features()
         if f["station_norm"] == target
     ]
 
@@ -104,6 +107,8 @@ async def nearest_exits(
         raise ValueError(f"lon must be in [-180, 180], got {lon}")
     if max_results < 1:
         raise ValueError(f"max_results must be >= 1, got {max_results}")
+    if max_results > 20:
+        raise ValueError(f"max_results must be <= 20, got {max_results}")
     scored = [
         {
             "station": f["station"],
@@ -112,7 +117,7 @@ async def nearest_exits(
             "lon": f["lon"],
             "distance_meters": _haversine_meters(lat, lon, f["lat"], f["lon"]),
         }
-        for f in _FEATURES
+        for f in _get_features()
     ]
     scored.sort(key=lambda r: r["distance_meters"])
     return scored[:max_results]

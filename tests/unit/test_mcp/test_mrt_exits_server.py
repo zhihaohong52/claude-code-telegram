@@ -51,7 +51,12 @@ async def test_nearest_exits_validates_coordinate_ranges():
         await srv.nearest_exits(lat=0.0, lon=999.0)
 
 
+async def test_nearest_exits_validates_max_results():
+    with pytest.raises(ValueError):
+        await srv.nearest_exits(lat=1.28, lon=103.85, max_results=21)
+
+
 def test_haversine_known_distance():
     # Marina Bay Sands area — roughly 300m test
     d = srv._haversine_meters(1.2834, 103.8607, 1.2816, 103.8636)
-    assert 200 < d < 1000
+    assert 250 < d < 400

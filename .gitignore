@@ -132,7 +132,8 @@ dmypy.json
 .pyre/
 
 # Project-specific
-data/
+data/*
+!data/mrt_exits.geojson
 *.db
 *.db-journal
 *.log
